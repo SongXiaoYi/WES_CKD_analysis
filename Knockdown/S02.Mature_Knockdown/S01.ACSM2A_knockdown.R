@@ -41,4 +41,7 @@ result <- scTenifoldKnk(countMatrix = countMatrix,
                         nc_nComp = 3 #PCA 的主成分数量
                         )
 
+setwd('H:\\CKDwork\\knokdown\\Experiment\\ACSM2A')
+
+
 
