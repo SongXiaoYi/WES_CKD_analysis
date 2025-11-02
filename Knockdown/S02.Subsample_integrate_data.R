@@ -109,26 +109,57 @@ Provide_tag <- function(x){
 Seurat_preprocessing <- function(seurat, project = "Scissor_Single_Cell", 
                                  normalization.method = "LogNormalize", scale.factor = 10000,
                                  selection.method = "vst", resolution = 0.6,
-                                 dims_Neighbors = 1:10, dims_TSNE = 1:10, dims_UMAP = 1:10,
+                                 dims_Neighbors = 1:20, dims_TSNE = 1:20, dims_UMAP = 1:20,
                                  verbose = TRUE){
     data <- NormalizeData(object = seurat, normalization.method = normalization.method, scale.factor = scale.factor, verbose = verbose)
     data <- FindVariableFeatures(object = data, selection.method = selection.method, verbose = verbose)
     data <- ScaleData(object = data, verbose = verbose)
-    data <- RunPCA(object = data, features = VariableFeatures(data), verbose = verbose)
-    data <- FindNeighbors(object = data, dims = dims_Neighbors, verbose = verbose)
-    data <- FindClusters( object = data, resolution = resolution, verbose = verbose)
-    data <- RunTSNE(object = data, dims = dims_TSNE)
-    data <- RunUMAP(object = data, dims = dims_UMAP, verbose = verbose)
+    #data <- RunPCA(object = data, features = VariableFeatures(data), verbose = verbose)
+    #data <- FindNeighbors(object = data, dims = dims_Neighbors, verbose = verbose)
+    #data <- FindClusters( object = data, resolution = resolution, verbose = verbose)
+    #data <- RunTSNE(object = data, dims = dims_TSNE)
+    #data <- RunUMAP(object = data, dims = dims_UMAP, verbose = verbose)
 
     return(data)
 }
 ################################################### Heree begin
-########################################
+######################################## Mature
 setwd('H:\\CKDwork\\knokdown\\Data')
 pbmc <- readRDS('./Mature_Full_v3.rds')
 pseudo_Bulk <- PseudoCell(pbmc, "RNA", "counts", "celltype", 20)
+pseudo_Bulk_mature <- pseudo_Bulk
+pseudo_Bulk__mature_normalize <- Seurat_preprocessing(pseudo_Bulk_mature)
+save(pseudo_Bulk_mature, pseudo_Bulk__mature_normalize, file = 'Mature_Pseudo_Bulk.Rdata')
 
+######################################## Fetal
+setwd('H:\\CKDwork\\knokdown\\Data')
+pbmc <- readRDS('./Fetal_full_v3.rds')
+abc <- pbmc@meta.data
+abc$celltype <- gsub('cDC1', 'cDC', abc$celltype)
+abc$celltype <- gsub('cDC2', 'cDC', abc$celltype)
+abc$celltype <- gsub('Fibroblast 1', 'Fibroblast', abc$celltype)
+abc$celltype <- gsub('Fibroblast 2', 'Fibroblast', abc$celltype)
+abc$celltype <- gsub('Macrophage 1', 'Macrophage', abc$celltype)
+abc$celltype <- gsub('Macrophage 2', 'Macrophage', abc$celltype)
+abc$celltype <- gsub('Myofibroblast 1', 'Myofibroblast', abc$celltype)
+abc$celltype <- gsub('Myofibroblast 2', 'Myofibroblast', abc$celltype)
+abc$celltype <- gsub('Proliferating B cell', 'B cell', abc$celltype)
+abc$celltype <- gsub('Proliferating cap mesenchyme', 'Cap mesenchyme', abc$celltype)
+abc$celltype <- gsub('Proliferating cDC', 'cDC', abc$celltype)
+abc$celltype <- gsub('Proliferating distal renal vesicle', 'Distal renal vesicle', abc$celltype)
+abc$celltype <- gsub('Proliferating fibroblast', 'Fibroblast', abc$celltype)
+abc$celltype <- gsub('Proliferating macrophage', 'Macrophage', abc$celltype)
+abc$celltype <- gsub('Proliferating monocyte', 'Monocyte', abc$celltype)
+abc$celltype <- gsub('Proliferating myofibroblast', 'Myofibroblast', abc$celltype)
+abc$celltype <- gsub('Proliferating NK cell', 'NK cell', abc$celltype)
+abc$celltype <- gsub('Proliferating stroma progenitor', 'Stroma progenitor', abc$celltype)
+abc$celltype <- gsub('CNT/PC - proximal UB', 'Proximal UB', abc$celltype)
+pbmc$Celltype <- abc$celltype
 
+pseudo_Bulk <- PseudoCell(pbmc, "RNA", "counts", "Celltype", 20)
+pseudo_Bulk_fetal <- pseudo_Bulk
+pseudo_Bulk__fetal_normalize <- Seurat_preprocessing(pseudo_Bulk_fetal)
+save(pseudo_Bulk_fetal, pseudo_Bulk__fetal_normalize, file = 'Fetal_Pseudo_Bulk.Rdata')
 
 
 
