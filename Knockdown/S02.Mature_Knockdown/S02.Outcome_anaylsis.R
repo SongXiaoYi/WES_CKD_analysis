@@ -156,4 +156,71 @@ pdf(file = 'P_N_Elisa.pdf', width = 20, height = 10)
 plotKO(result,'ACSM2A')
 dev.off()
 
+################################################################# enrich_analysis
+enrichFunction <- function(X, fdrThreshold = fdrThreshold){
+    E <- enrichr(X, c('KEGG_2019_Human', 'GO_Biological_Process_2018','GO_Cellular_Component_2018', 'GO_Molecular_Function_2018','BioPlanet_2019', 'WikiPathways_2019_Human', 'Reactome_2016'))
+    E <- do.call(rbind.data.frame, E)
+    E <- E[E$Adjusted.P.value < fdrThreshold,]
+    E <- E[order(E$Adjusted.P.value),]
+    E$Term <- unlist(lapply(strsplit(E$Term,''), function(X){
+        X[1] <- toupper(X[1])
+        X <- paste0(X,collapse = '')
+        X <- gsub('\\([[:print:]]+\\)|Homo[[:print:]]+|WP[[:digit:]]+','',X)
+        X <- gsub("'s",'',X)
+        X <- unlist(strsplit(X,','))[1]
+        X <- gsub('[[:blank:]]$','',X)
+        return(X)
+    }))
+    selectedSet <- rep(FALSE, nrow(E))
+    for(i in seq_len(nrow(E))){
+        if(i == 1){
+            selectedSet[i] <- TRUE
+        } else {
+            A <- unique(unlist(strsplit(E[which(selectedSet[seq_len(i)]),'Genes'], ';')))
+            B <- unlist(strsplit(E[i,'Genes'], ';'))
+            selectedSet[i] <- !all(B %in% A)
+        }
+    }
+    gSets <- table(toupper(E$Term))
+    gSets <- names(gSets[gSets > 1])
+    for(i in gSets){
+        selectedSet[which(toupper(E$Term) %in% i)[-1]] <- FALSE
+    }
+    E <- E[selectedSet,]
+    if(nrow(E) > nCategories){
+        E <- E[seq_len(nCategories),]  
+    }
+    return(E)
+}
+
+gKO <- 'ACSM2A'
+nCategories = 100
+gList <- unique(c(gKO, result$diffRegulation$gene[result$diffRegulation$distance > 1e-10 & result$diffRegulation$p.adj < 0.05]))
+E <- enrichFunction(gList, 1)
+
+##############################################################
+top_genes <- head(result$diffRegulation[order(-result$diffRegulation$FC), ], 20)
+ggplot(top_genes, aes(x=reorder(gene, FC), y=FC)) +
+  geom_bar(stat='identity', fill='steelblue') +
+  coord_flip() +
+  labs(title="Top 20 Differentially Regulated Genes",
+       x="Gene", y="FC") +
+  theme_minimal()
+
+###############################################################
+df <- result$diffRegulation
+df$log_pval <- -log10(df$p.adj)
+label_genes <- subset(df, abs(Z) > 2 & p.adj < 0.01)
+ggplot(df, aes(x=Z, y=log_pval)) +
+  geom_point(alpha=0.5) +
+  geom_hline(yintercept=-log10(0.05), linetype="dashed", color="red") +
+  geom_vline(xintercept=c(2), linetype="dashed", color="blue") +
+  geom_text_repel(data=label_genes, aes(label=gene),
+                  size=3, max.overlaps=50) +
+  labs(title="Z vs -log10(p-value)",
+       x="Z-score", y="-log10(p-value)") +
+  theme_classic()
+
+
+
 
