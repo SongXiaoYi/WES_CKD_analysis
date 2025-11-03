@@ -6,6 +6,7 @@ library(ggrepel)  # 用于防止标签重叠
 library(data.table)
 library(enrichR)
 library(igraph)
+library(ggbreak)
 ##########################################
 setwd('H:\\Zhuwen_analysis\\ACSM2A')
 load('ACSM2A_result_G10000_C2000.Rdata')
@@ -209,17 +210,20 @@ ggplot(top_genes, aes(x=reorder(gene, FC), y=FC)) +
 
 ###############################################################
 df <- result$diffRegulation
+df <- df[-1,]
+df <- df[df$Z > 0,]
+df$color <- ifelse(df$FC > 2 & df$p.adj < 0.01, 'red','black')
 df$log_pval <- -log10(df$p.adj)
 label_genes <- subset(df, abs(Z) > 2 & p.adj < 0.01)
 ggplot(df, aes(x=Z, y=log_pval)) +
-  geom_point(alpha=0.5) +
+  geom_point(alpha=0.5,color = df$color) +
   geom_hline(yintercept=-log10(0.05), linetype="dashed", color="red") +
   geom_vline(xintercept=c(2), linetype="dashed", color="blue") +
   geom_text_repel(data=label_genes, aes(label=gene),
                   size=3, max.overlaps=50) +
   labs(title="Z vs -log10(p-value)",
-       x="Z-score", y="-log10(p-value)") +
-  theme_classic()
+       x="Z-score", y="-log10(p-value)") + 
+  theme_classic() 
 
 
 
