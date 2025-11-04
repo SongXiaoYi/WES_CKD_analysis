@@ -7,11 +7,13 @@ library(data.table)
 library(enrichR)
 library(igraph)
 library(ggbreak)
+library(patchwork)
+library(theme)
 ##########################################
-setwd('H:\\Zhuwen_analysis\\ACSM2A')
+setwd('G:\\CKDwork\\knokdown\\Experiment\\ACSM2A_Mature')
 load('ACSM2A_result_G10000_C2000.Rdata')
 
-plotKO <- function(X, gKO, q = 0.99, annotate = TRUE, nCategories = 20, fdrThreshold = 0.05){
+plotKO <- function(X, gKO, q = 0.99, annotate = TRUE, nCategories = 14, fdrThreshold = 0.05){
   # gKO <- 'Trem2'
   # q = 0.99
   # annotate = TRUE
@@ -75,7 +77,9 @@ plotKO <- function(X, gKO, q = 0.99, annotate = TRUE, nCategories = 20, fdrThres
         }
         return(E)
       }
-      E <- enrichFunction(gList, fdrThreshold)
+      aaa <- c(1:4,6,7,9:11,14,15,19,21,29)
+      E <- enrichFunction(gList, 1)
+      E <- E[aaa,]
       if(isTRUE(nrow(E) > 0)){
         tPlot <- strsplit(E$Genes, ';')
         pPlot <- matrix(0,nrow = length(V(netPlot)), ncol = nrow(E))
