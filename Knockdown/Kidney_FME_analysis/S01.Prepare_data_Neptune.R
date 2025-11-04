@@ -4,10 +4,10 @@ library(stringr)
 library(patchwork)
 library(ggplot2)
 library(knitr)
-#library(msigdbr) 
-#library(fgsea)
+library(msigdbr) 
+library(fgsea)
 library(ggplot2)
-#library(GSVA)
+library(GSVA)
 library(GSEABase)
 library(limma)
 library(data.table)
@@ -16,52 +16,40 @@ library(Hmisc)
 library(tidyr)
 library(tibble)
 #######################
-#library(GSVA)
+library(GSVA)
 library(GSEABase)
 library(ggpubr)
 library(reshape2)
 library(sva)
 ######################################
-setwd('H:\\Mendilian\\RNA_experiment\\Kidney fibrosis')
-#gmt <- getGmt('./FME_signature.gmt')
-################################## Neptune meta 
-###################################### Calculate GSE197307
-setwd('H:\\Mendilian\\RNA_experiment\\Signature_characteristics\\Neptune')
-GSE197307_matrix <- read.csv('./Neptune_GSE197307_filter.csv')
-rownames(GSE197307_matrix) <- GSE197307_matrix$X
-GSE197307_matrix <- GSE197307_matrix[,-1]
-GSE197307_matrix <- as.matrix(GSE197307_matrix)
+setwd('G:\\Mendilian\\RNA_experiment\\Data\\Bulkseq\\海王星信息整理\\Datasets\\GSE182380')
+pbmc <- fread('GSE182380-normalize_data.csv') %>% as.data.frame()
+Names <- pbmc$V1
+pbmc <- as.matrix(pbmc[,2:200])
+rownames(pbmc) <- Names
+pbmc = avereps(pbmc)
+pbmc = pbmc[rowMeans(pbmc)>0,]
+pbmc = normalizeBetweenArrays(pbmc)
+##################################
+setwd('G:\\Mendilian\\RNA_experiment\\Kidney fibrosis')
+gmt <- getGmt('./FME_signature.gmt')
+##################################
+gs.exp <- gsva(pbmc,gmt,method = "ssgsea",kcdf = "Gaussian", min.sz = 10)
+Total_score <- t(gs.exp)
+Total_score <- as.data.frame(Total_score)
+Total_score$ID <- rownames(Total_score)
+Total_score$ACSM2A <- pbmc['ACSM2A',]
+Total_score <- Total_score[,c(2,3,1)]
+######################################################
+setwd('G:\\Mendilian\\RNA_experiment\\Data\\Bulkseq\\海王星信息整理\\Datasets\\Integrate_cohort')
+meta <- fread('./Integrate_meta.csv')
+Total_score$EGFR <- meta$EGFR[match(Total_score$ID,meta$ID_match)]
+setwd('G:\\CKDwork\\knokdown\\Experiment\\ACSM2A_Mature')
+write.csv(Total_score,file = 'Neptune_total_FME_score.csv',row.names = FALSE)
 
-# log2 transform
-qx <- as.numeric(quantile(GSE197307_matrix, c(0., 0.25, 0.5, 0.75, 0.99, 1.0), na.rm=T))
-LogC <- (qx[5] > 100) ||
-          (qx[6]-qx[1] > 50 && qx[2] > 0)
-if (LogC) { GSE197307_matrix[which(GSE197307_matrix <= 0)] <- NaN
-  GSE197307_matrix <- log2(GSE197307_matrix) }
 
-GSE197307_matrix[which(GSE197307_matrix == 'NaN')] <- 0
-GSE197307_matrix <- avereps(GSE197307_matrix)
-GSE197307_matrix <- GSE197307_matrix[rowMeans(GSE197307_matrix)>0,]
 
-###################################### Calculate GSE133288
-setwd('H:\\Mendilian\\RNA_experiment\\Signature_characteristics\\Neptune')
-GSE133288_matrix <- read.csv('./Neptune_GSE133288_filter.csv')
-rownames(GSE133288_matrix) <- GSE133288_matrix$X
-GSE133288_matrix <- GSE133288_matrix[,-1]
-GSE133288_matrix <- as.matrix(GSE133288_matrix)
-###################################### Combine
-Come_genes <- intersect(rownames(GSE133288_matrix),rownames(GSE197307_matrix))
-GSE197307_matrix <- GSE197307_matrix[Come_genes,]
-GSE133288_matrix <- GSE133288_matrix[Come_genes,]
-############################################################## Combine
-Combine_matrix <- cbind(GSE197307_matrix,GSE133288_matrix) %>% as.data.frame()
-a <- t(Combine_matrix['ACSM2A',]) %>% as.data.frame()
-a$Sample <- rownames(a)
-################################### FME score
-setwd('H:\\Mendilian\\RNA_experiment\\Kidney fibrosis')
-Neptune_score <- read.csv('./Neptune_total_FME_score.csv')
-a$FME <- Neptune_score$FME_signature[match(Neptune_score$ID, a$Sample)]
-setwd('H:\\CKDwork\\knokdown\\Experiment')
-write.csv(a, file = 'FME_score_analysis.csv', row.names = FALSE)
+
+
 
 
