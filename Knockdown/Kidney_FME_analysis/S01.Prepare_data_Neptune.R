@@ -44,6 +44,7 @@ Total_score <- Total_score[,c(2,3,1)]
 setwd('G:\\Mendilian\\RNA_experiment\\Data\\Bulkseq\\海王星信息整理\\Datasets\\Integrate_cohort')
 meta <- fread('./Integrate_meta.csv')
 Total_score$EGFR <- meta$EGFR[match(Total_score$ID,meta$ID_match)]
+#Total_score$ACSM2A <- log(Total_score$ACSM2A)
 setwd('G:\\CKDwork\\knokdown\\Experiment\\ACSM2A_Mature')
 write.csv(Total_score,file = 'Neptune_total_FME_score.csv',row.names = FALSE)
 
