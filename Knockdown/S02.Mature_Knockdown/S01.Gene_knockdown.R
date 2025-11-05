@@ -99,7 +99,7 @@ result <- scTenifoldKnk(countMatrix = countMatrix,
                         )
 
 setwd('H:\\CKDwork\\knokdown\\Experiment\\ZNF510')
-save(result, file = 'ZNF782_result_G10000_C2000.Rdata')
+save(result, file = 'ZNF510_result_G10000_C2000.Rdata')
 gc()
 ########################################################### CYFIP1
 result <- scTenifoldKnk(countMatrix = countMatrix, 
