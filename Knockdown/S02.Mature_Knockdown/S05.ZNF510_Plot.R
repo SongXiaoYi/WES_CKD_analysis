@@ -8,7 +8,6 @@ library(enrichR)
 library(igraph)
 library(ggbreak)
 library(patchwork)
-library(theme)
 ##########################################
 setwd('G:\\CKDwork\\knokdown\\Experiment\\ZNF510')
 load('ZNF510_result_G10000_C2000.Rdata')
@@ -77,9 +76,7 @@ plotKO <- function(X, gKO, q = 0.99, annotate = TRUE, nCategories = 14, fdrThres
         }
         return(E)
       }
-      aaa <- c(1:4,6,7,9:11,14,15,19,21,29)
-      E <- enrichFunction(gList, 1)
-      E <- E[aaa,]
+      E <- enrichFunction(gList, fdrThreshold)
       if(isTRUE(nrow(E) > 0)){
         tPlot <- strsplit(E$Genes, ';')
         pPlot <- matrix(0,nrow = length(V(netPlot)), ncol = nrow(E))
@@ -157,8 +154,65 @@ plotKO <- function(X, gKO, q = 0.99, annotate = TRUE, nCategories = 14, fdrThres
   }
 }
 
-pdf(file = 'P_N_Elisa.pdf', width = 20, height = 10)
+pdf(file = 'P_N_Elisa.pdf', width = 6.8, height = 4.4)
 plotKO(result,'ZNF510')
 dev.off()
+
+#############################################################
+#############################################################
+#############################################################
+
+################################################################# enrich_analysis
+enrichFunction <- function(X, fdrThreshold = fdrThreshold){
+    E <- enrichr(X, c('KEGG_2019_Human', 'GO_Biological_Process_2018','GO_Cellular_Component_2018', 'GO_Molecular_Function_2018','BioPlanet_2019', 'WikiPathways_2019_Human', 'Reactome_2016'))
+    E <- do.call(rbind.data.frame, E)
+    E <- E[E$Adjusted.P.value < fdrThreshold,]
+    E <- E[order(E$Adjusted.P.value),]
+    E$Term <- unlist(lapply(strsplit(E$Term,''), function(X){
+        X[1] <- toupper(X[1])
+        X <- paste0(X,collapse = '')
+        X <- gsub('\\([[:print:]]+\\)|Homo[[:print:]]+|WP[[:digit:]]+','',X)
+        X <- gsub("'s",'',X)
+        X <- unlist(strsplit(X,','))[1]
+        X <- gsub('[[:blank:]]$','',X)
+        return(X)
+    }))
+    selectedSet <- rep(FALSE, nrow(E))
+    for(i in seq_len(nrow(E))){
+        if(i == 1){
+            selectedSet[i] <- TRUE
+        } else {
+            A <- unique(unlist(strsplit(E[which(selectedSet[seq_len(i)]),'Genes'], ';')))
+            B <- unlist(strsplit(E[i,'Genes'], ';'))
+            selectedSet[i] <- !all(B %in% A)
+        }
+    }
+    gSets <- table(toupper(E$Term))
+    gSets <- names(gSets[gSets > 1])
+    for(i in gSets){
+        selectedSet[which(toupper(E$Term) %in% i)[-1]] <- FALSE
+    }
+    E <- E[selectedSet,]
+    if(nrow(E) > nCategories){
+        E <- E[seq_len(nCategories),]  
+    }
+    return(E)
+}
+
+gKO <- 'ZNF510'
+nCategories = 100
+gList <- unique(c(gKO, result$diffRegulation$gene[result$diffRegulation$distance > 1e-10 & result$diffRegulation$p.adj < 0.05]))
+E <- enrichFunction(gList, 1)
+
+
+
+
+
+
+
+
+
+
+
 
 
