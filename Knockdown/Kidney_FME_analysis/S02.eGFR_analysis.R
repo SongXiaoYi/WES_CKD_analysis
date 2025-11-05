@@ -20,6 +20,8 @@ Score <- fread('./Neptune_total_FME_score.csv') %>% as.data.frame()
 Score <- Score[Score$EGFR != 'None',]
 Score <- na.omit(Score)
 Score$EGFR <- as.numeric(Score$EGFR)
+#Score <- Score[Score$EGFR <= 90,]
+#Score$Group <- Score$EGFR > 60
 Score$Group <- Score$EGFR > 45
 #Score$ACSM2A <- log(Score$ACSM2A)
 
